@@ -13,7 +13,12 @@ import Register from "./pages/register.jsx";
 import Home from "./pages/home.jsx";
 
 //socket io
-const socket = io(import.meta.env.VITE_API_ENDPOINT.split("/api")[0]);
+const socket = io(import.meta.env.VITE_API_ENDPOINT.split("/api")[0], {
+  transports: ["websocket"],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 
 function App() {

@@ -43,7 +43,10 @@ app.use(fileUpload({
 }))
 
 //using cors
-app.use(cors({}));
+app.use(cors({
+  origin: process.env.CLIENT_ENDPOINT,
+  credentials: true,
+}));
 
 //router
 app.use("/api",routes);
