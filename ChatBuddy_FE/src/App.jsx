@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   BrowserRouter as Router,
@@ -12,10 +12,10 @@ import Login from "./pages/login.jsx";
 import Register from "./pages/register.jsx";
 import Home from "./pages/home.jsx";
 
-console.log("API URL:", import.meta.env.VITE_API_ENDPOINT);
-
 //socket io
-const socket = io(import.meta.env.VITE_API_ENDPOINT.split("/api")[0], {
+const API_URL = import.meta.env.VITE_API_ENDPOINT || "https://chatbuddy-xp5b.onrender.com/api";
+console.log("API URL:", API_URL);
+const socket = io(API_URL.split("/api")[0], {
   transports: ["websocket"],
   reconnection: true,
   reconnectionAttempts: 5,
@@ -39,10 +39,10 @@ function App() {
 
   return (
     <div className="dark">
-       <SocketContext.Provider value={socket}>
+      <SocketContext.Provider value={socket}>
         <Router>
           <Routes>
-          <Route
+            <Route
               exact
               path="/"
               element={
