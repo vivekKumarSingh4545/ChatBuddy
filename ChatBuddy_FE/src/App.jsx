@@ -12,6 +12,8 @@ import Login from "./pages/login.jsx";
 import Register from "./pages/register.jsx";
 import Home from "./pages/home.jsx";
 
+console.log("API URL:", import.meta.env.VITE_API_ENDPOINT);
+
 //socket io
 const socket = io(import.meta.env.VITE_API_ENDPOINT.split("/api")[0], {
   transports: ["websocket"],
