@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CallAcions from "./CallActions";
 import CallArea from "./CallArea";
 import Header from "./Header";
@@ -22,8 +22,14 @@ export default function Call({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const isAudio = callType === "audio";
+
+  // ── Drag state ──────────────────────────────────────────────────────────
+  const panelRef = useRef(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const [pos, setPos] = useState(null); // null = CSS-centered initially
 
   // Reset states when call finishes
   useEffect(() => {
@@ -31,6 +37,7 @@ export default function Call({
       setIsMuted(false);
       setIsVideoMuted(false);
       setIsSpeakerMuted(false);
+      setPos(null);
     }
   }, [show, callEnded]);
 
@@ -52,21 +59,74 @@ export default function Call({
     }
   }, [isVideoMuted, stream]);
 
-  // Apply speaker mute
+  // Apply speaker mode (high volume for loudspeaker, low volume for earpiece)
   useEffect(() => {
     if (userVideo.current) {
-      userVideo.current.muted = isSpeakerMuted;
+      userVideo.current.muted = false; // Never fully mute the remote peer
+      userVideo.current.volume = isSpeakerMuted ? 0.15 : 1.0;
     }
   }, [isSpeakerMuted, userVideo]);
+
+  // ── Pointer-capture drag handlers ────────────────────────────────────────
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+  const handlePointerDown = (e) => {
+    // Only drag with left mouse button / touch; skip if clicking a button or video
+    if (e.button !== undefined && e.button !== 0) return;
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === "button" || tag === "video" || tag === "svg" || tag === "path") return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    // Capture the pointer so mousemove fires even outside the element
+    panel.setPointerCapture(e.pointerId);
+
+    const rect = panel.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handlePointerMove = (e) => {
+    if (!panelRef.current) return;
+    if (!panelRef.current.hasPointerCapture(e.pointerId)) return;
+
+    const rect = panelRef.current.getBoundingClientRect();
+    setPos({
+      x: clamp(e.clientX - dragOffset.current.x, 0, window.innerWidth - rect.width),
+      y: clamp(e.clientY - dragOffset.current.y, 0, window.innerHeight - rect.height),
+    });
+  };
+
+  const handlePointerUp = (e) => {
+    if (panelRef.current?.hasPointerCapture(e.pointerId)) {
+      panelRef.current.releasePointerCapture(e.pointerId);
+    }
+    setIsDragging(false);
+  };
+
+  const panelStyle = pos
+    ? { position: "fixed", left: pos.x, top: pos.y, transform: "none", zIndex: 50 }
+    : { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 50 };
 
   return (
     <>
       {/* ── Active call panel ─────────────────────────────────────────────── */}
       <div
-        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 rounded-2xl overflow-hidden callbg
+        ref={panelRef}
+        style={{ ...panelStyle, cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
+        className={`rounded-2xl overflow-hidden callbg select-none
           ${isAudio ? "w-[320px] h-[420px]" : "w-[350px] h-[550px]"}
           ${receiveingCall && !callAccepted ? "hidden" : ""}
         `}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onMouseOver={() => setShowActions(true)}
         onMouseOut={() => setShowActions(false)}
       >
@@ -82,10 +142,8 @@ export default function Call({
           />
 
           {/* ── VIDEO STREAMS (video call only) ─────────────────────────── */}
-          {/* Always keep video elements in the DOM so refs are never null.
-              Visibility is controlled by CSS classes / display. */}
           <div className={isAudio ? "hidden" : ""}>
-            {/* Remote video — hidden until call is accepted */}
+            {/* Remote video */}
             <div className={callAccepted && !callEnded ? "" : "hidden"}>
               <video
                 ref={userVideo}
@@ -93,10 +151,11 @@ export default function Call({
                 autoPlay
                 className={toggle ? "SmallVideoCall" : "largeVideoCall"}
                 onClick={() => setToggle((prev) => !prev)}
+                onPointerDown={(e) => e.stopPropagation()}
               />
             </div>
 
-            {/* Local video — always mounted, srcObject set via useEffect */}
+            {/* Local video */}
             <div className={stream ? "" : "hidden"}>
               <video
                 ref={myVideo}
@@ -107,6 +166,7 @@ export default function Call({
                   showActions ? "moveVideoCall" : ""
                 }`}
                 onClick={() => setToggle((prev) => !prev)}
+                onPointerDown={(e) => e.stopPropagation()}
               />
             </div>
           </div>
@@ -123,7 +183,6 @@ export default function Call({
                     className="w-full h-full object-cover"
                   />
                 </div>
-                {/* Pulsing ring when connected */}
                 {callAccepted && !callEnded && (
                   <>
                     <span className="absolute inset-0 rounded-full border-2 border-emerald-400/40 animate-ping" />
@@ -132,7 +191,7 @@ export default function Call({
                 )}
               </div>
 
-              {/* Audio waveform bars (decorative, animated when connected) */}
+              {/* Audio waveform bars */}
               {callAccepted && !callEnded && (
                 <div className="flex items-end gap-x-1 h-8">
                   {[3, 6, 10, 7, 4, 8, 5, 9, 6, 3].map((h, i) => (
@@ -152,16 +211,18 @@ export default function Call({
 
           {/* Call actions bar (hover to reveal) */}
           {showActions ? (
-            <CallAcions
-              endCall={endCall}
-              callType={callType}
-              isMuted={isMuted}
-              setIsMuted={setIsMuted}
-              isVideoMuted={isVideoMuted}
-              setIsVideoMuted={setIsVideoMuted}
-              isSpeakerMuted={isSpeakerMuted}
-              setIsSpeakerMuted={setIsSpeakerMuted}
-            />
+            <div onPointerDown={(e) => e.stopPropagation()}>
+              <CallAcions
+                endCall={endCall}
+                callType={callType}
+                isMuted={isMuted}
+                setIsMuted={setIsMuted}
+                isVideoMuted={isVideoMuted}
+                setIsVideoMuted={setIsVideoMuted}
+                isSpeakerMuted={isSpeakerMuted}
+                setIsSpeakerMuted={setIsSpeakerMuted}
+              />
+            </div>
           ) : null}
         </div>
       </div>

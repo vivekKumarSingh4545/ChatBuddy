@@ -6,6 +6,13 @@ import { findUser } from "../services/user.service.js";
 export const register = async (req,res,next)=>{
    try{
       const { name, email, picture, status, password } = req.body;
+    
+    // Extra guard to reject register if email is not valid
+    const validator = (await import("validator")).default;
+    if (!email || !validator.isEmail(email)) {
+      throw createHttpError.BadRequest("Please provide a valid email address.");
+    }
+
     const newUser = await createUser({
       name,
       email,
@@ -13,6 +20,15 @@ export const register = async (req,res,next)=>{
       status,
       password,
     });
+    // Send the welcome email
+    try {
+      const { sendGreetingEmail } = await import("../services/email.service.js");
+      // Run asynchronously so it doesn't block the API response
+      sendGreetingEmail(newUser.email, newUser.name);
+    } catch (emailErr) {
+      console.error("Failed to send welcome email:", emailErr);
+    }
+
     const access_token = await generateToken(
       { userId: newUser._id },
       "1d",

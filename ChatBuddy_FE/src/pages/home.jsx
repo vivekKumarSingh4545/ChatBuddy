@@ -374,8 +374,9 @@ function Home({ socket }) {
         </div>
       </div>
 
-      {/* Call overlay */}
-      <div className={(show || call.signal) && !call.callEnded ? "" : "hidden"}>
+      {/* Call overlay — rendered OUTSIDE all overflow:hidden containers so it
+          can be freely dragged anywhere across the full viewport */}
+      {(show || call.signal) && !call.callEnded ? (
         <Call
           call={call}
           setCall={setCall}
@@ -387,7 +388,7 @@ function Home({ socket }) {
           show={show}
           endCall={endCall}
         />
-      </div>
+      ) : null}
     </>
   );
 }
