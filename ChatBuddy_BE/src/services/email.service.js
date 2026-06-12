@@ -25,7 +25,7 @@ export const sendGreetingEmail = async (toEmail, userName, subject = "Welcome to
       from: `"ChatBuddy Support" <${fromEmail}>`,
       to: toEmail,
       subject: subject,
-      text: `Hello ${userName},\n\nThank you for registering on ChatBuddy! We're thrilled to have you here.\n\nWith ChatBuddy you can:\n- Enjoy crystal clear voice calls\n- Connect with high-quality video calls\n- Send real-time instant messages\n\nStart chatting now at: http://localhost:3000\n\nBest regards,\nThe ChatBuddy Team`,
+      text: `Hello ${userName},\n\nThank you for registering on ChatBuddy! We're thrilled to have you here.\n\nWith ChatBuddy you can:\n- Enjoy crystal clear voice calls\n- Connect with high-quality video calls\n- Send real-time instant messages\n\nStart chatting now at: https://chatbuddy2.vercel.app\n\nBest regards,\nThe ChatBuddy Team`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
           <h2 style="color: #6366f1; text-align: center;">Welcome to ChatBuddy, ${userName}! 👋</h2>
@@ -38,7 +38,7 @@ export const sendGreetingEmail = async (toEmail, userName, subject = "Welcome to
           </ul>
           <br />
           <p style="text-align: center; margin: 20px 0;">
-            <a href="http://localhost:3000" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Start Chatting Now</a>
+            <a href="https://chatbuddy2.vercel.app" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Start Chatting Now</a>
           </p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px;" />
           <p style="font-size: 11px; color: #64748b; text-align: center;">You received this email because you registered on ChatBuddy.</p>
