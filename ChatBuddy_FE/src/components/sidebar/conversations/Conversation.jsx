@@ -68,7 +68,15 @@ function Conversation({ convo, socket, online, typing }) {
                 {typing === convo._id ? (
                   <p className="text-green_1 font-medium animate-pulse">Typing...</p>
                 ) : (
-                  <p className="line-clamp-1 max-w-[170px]">
+                  <p className={`line-clamp-1 max-w-[170px] ${
+                    convo.latestMessage && 
+                    (typeof convo.latestMessage.sender === "object" 
+                      ? convo.latestMessage.sender._id !== user._id 
+                      : convo.latestMessage.sender !== user._id) && 
+                    convo.latestMessage.status !== "read"
+                      ? "font-bold text-white dark:text-white"
+                      : "dark:text-dark_text_3"
+                  }`}>
                     {convo.latestMessage?.message || "No messages yet"}
                   </p>
                 )}
