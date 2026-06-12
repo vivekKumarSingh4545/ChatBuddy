@@ -11,8 +11,8 @@ export const sendGreetingEmail = async (toEmail, userName, subject = "Welcome to
   try {
     const transporter = nodemailer.createTransport({
       host: BREVO_HOST || "smtp-relay.brevo.com",
-      port: parseInt(BREVO_PORT || "587"),
-      secure: false, // true for 465, false for other ports (like 587)
+      port: parseInt(BREVO_PORT || "465"),
+      secure: true, // true for 465, false for other ports (like 587)
       auth: {
         user: BREVO_USER,
         pass: BREVO_PASS,
